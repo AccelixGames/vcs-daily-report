@@ -413,11 +413,11 @@ async function main() {
     const email = requireEnv('USER_EMAIL');
     const range = resolveRange(dateArg);
     const isCi = process.env.CI === 'true' || process.env.CI === '1';
+    const printReport = !isCi && process.env.PRINT_REPORT !== 'false';
 
     console.log('');
     console.log(`[1] 대상 범위: ${range.label} (KST)  ${range.startStr} 00:00 → ${range.endStr} 00:00`);
-    const maskedEmail = email.replace(/^(.{2}).*(@.*)$/, '$1***$2');
-    console.log(`    소유자: ${maskedEmail}    실행환경: ${isCi ? 'CI' : 'local'}`);
+    console.log(`    실행환경: ${isCi ? 'CI' : 'local'}`);
 
     if (isCi) {
         console.log('');
@@ -451,11 +451,15 @@ async function main() {
     console.log('');
     console.log(`    메시지 ${messages.length}개 (각 ${messages.map(m => m.length).join('자, ')}자)`);
 
-    for (let i = 0; i < messages.length; i++) {
-        console.log('');
-        console.log('='.repeat(64) + (messages.length > 1 ? ` [${i + 1}/${messages.length}]` : ''));
-        console.log(messages[i]);
-        console.log('='.repeat(64));
+    if (printReport) {
+        for (let i = 0; i < messages.length; i++) {
+            console.log('');
+            console.log('='.repeat(64) + (messages.length > 1 ? ` [${i + 1}/${messages.length}]` : ''));
+            console.log(messages[i]);
+            console.log('='.repeat(64));
+        }
+    } else {
+        console.log('    리포트 본문 출력 스킵');
     }
 
     if (process.env.DISCORD_WEBHOOK) {
