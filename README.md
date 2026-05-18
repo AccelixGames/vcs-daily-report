@@ -37,24 +37,24 @@ GitHub Actions (ubuntu-latest, cron 0 0 * * *)
 ## 리포트 구조
 
 ````md
-# 일일리포트 (YYYY-MM-DD)
+# 📋 일일리포트 (YYYY-MM-DD)
 ```
-요약
+📊 요약
 - 전체 체크인 N건
 - main/beta 반영 N건
 - main/beta 미반영 N건
 - 브랜치 N건: ...
-
-주의
-- 코멘트 없는 체크인 N개 (...)
 ```
 
-## main/beta 에 머지된 수정사항
+## ⚠️ 주의
+- 코멘트 없는 체크인 N개 (...)
+
+## ✅ main/beta 에 머지된 수정사항
 
 ### 카테고리1
 > - **키워드** - 디테일
 
-## 아직 main/beta 에 머지 안 된 수정사항
+## ⏳ 아직 main/beta 에 머지 안 된 수정사항
 
 ### 카테고리2
 > - ...

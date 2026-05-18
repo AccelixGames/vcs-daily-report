@@ -417,19 +417,19 @@ function formatChangesText(text) {
 
 function buildMessages(dateLabel, summaryLines, cautionLines, mergedText, unmergedText, targetBranch) {
     const report = [
-        `# 일일리포트 (${dateLabel})`,
+        `# 📋 일일리포트 (${dateLabel})`,
         '```',
-        '요약',
+        '📊 요약',
         ...summaryLines,
-        '',
-        '주의',
-        ...cautionLines,
         '```',
         '',
-        `## ${targetBranch} 에 머지된 수정사항`,
+        '## ⚠️ 주의',
+        ...cautionLines,
+        '',
+        `## ✅ ${targetBranch} 에 머지된 수정사항`,
         formatChangesText(mergedText),
         '',
-        `## 아직 ${targetBranch} 에 머지 안 된 수정사항`,
+        `## ⏳ 아직 ${targetBranch} 에 머지 안 된 수정사항`,
         formatChangesText(unmergedText),
     ].join('\n');
 
