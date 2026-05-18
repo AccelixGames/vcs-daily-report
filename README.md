@@ -38,8 +38,9 @@ GitHub Actions (ubuntu-latest, cron 0 0 * * *)
 
 ````md
 # 📋 일일리포트 (YYYY-MM-DD)
+
+## 📊 요약
 ```
-📊 요약
 - 전체 체크인 N건
 - main/beta 반영 N건
 - main/beta 미반영 N건

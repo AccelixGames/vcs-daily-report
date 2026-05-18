@@ -418,8 +418,9 @@ function formatChangesText(text) {
 function buildMessages(dateLabel, summaryLines, cautionLines, mergedText, unmergedText, targetBranch) {
     const report = [
         `# 📋 일일리포트 (${dateLabel})`,
+        '',
+        '## 📊 요약',
         '```',
-        '📊 요약',
         ...summaryLines,
         '```',
         '',
