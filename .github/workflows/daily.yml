@@ -1,0 +1,55 @@
+name: Daily PlasticSCM Report
+
+on:
+  schedule:
+    # 매일 UTC 00:00 = KST 09:00. GitHub cron 은 ±15분 지연 가능.
+    - cron: '0 0 * * *'
+  workflow_dispatch:
+    inputs:
+      date:
+        description: '대상 날짜 (YYYY-MM-DD). 비우면 어제.'
+        required: false
+        default: ''
+
+concurrency:
+  group: daily-report
+  cancel-in-progress: false
+
+jobs:
+  report:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    env:
+      CI: 'true'
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+      PLASTIC_TOKEN: ${{ secrets.PLASTIC_TOKEN }}
+      PLASTIC_CLOUD_CACHE: ${{ secrets.PLASTIC_CLOUD_CACHE }}
+      USER_EMAIL: ${{ secrets.USER_EMAIL }}
+      PLASTIC_SERVER: ${{ secrets.PLASTIC_SERVER }}
+      PLASTIC_REPO_SPEC: ${{ secrets.PLASTIC_REPO_SPEC }}
+      CLAUDE_MODEL: ${{ vars.CLAUDE_MODEL }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Plastic SCM CLI (plasticscm-client-core)
+        run: |
+          set -euo pipefail
+          curl -fsSL https://www.plasticscm.com/plasticrepo/stable/debian/Release.key \
+            | sudo gpg --dearmor -o /usr/share/keyrings/plasticscm.gpg
+          echo "deb [signed-by=/usr/share/keyrings/plasticscm.gpg] https://www.plasticscm.com/plasticrepo/stable/debian/ ./" \
+            | sudo tee /etc/apt/sources.list.d/plasticscm.list
+          sudo apt-get update -qq
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y plasticscm-client-core
+          cm version
+
+      - name: Run daily report
+        run: node daily-report.mjs ${{ github.event.inputs.date }}
