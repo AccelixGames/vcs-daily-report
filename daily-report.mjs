@@ -41,27 +41,60 @@ function loadEnv() {
     }
 }
 
-// KST 기준 YYYY/MM/DD 변환.
-function fmtKstDate(utcMs) {
-    const k = new Date(utcMs + 9 * 3600 * 1000);
-    return `${k.getUTCFullYear()}/${String(k.getUTCMonth() + 1).padStart(2, '0')}/${String(k.getUTCDate()).padStart(2, '0')}`;
+function pad2(n) {
+    return String(n).padStart(2, '0');
 }
 
-// 대상 KST 날짜 범위 계산.
+// KST 기준 날짜/시간 문자열 변환.
+function getKstParts(utcMs) {
+    const k = new Date(utcMs + 9 * 3600 * 1000);
+    return {
+        y: k.getUTCFullYear(),
+        m: pad2(k.getUTCMonth() + 1),
+        d: pad2(k.getUTCDate()),
+        hh: pad2(k.getUTCHours()),
+        mm: pad2(k.getUTCMinutes()),
+        ss: pad2(k.getUTCSeconds()),
+    };
+}
+
+function fmtKstDate(utcMs) {
+    const p = getKstParts(utcMs);
+    return `${p.y}/${p.m}/${p.d}`;
+}
+
+function fmtKstDateTime(utcMs) {
+    const p = getKstParts(utcMs);
+    return `${p.y}/${p.m}/${p.d} ${p.hh}:${p.mm}:${p.ss}`;
+}
+
+function fmtKstDateMinute(utcMs) {
+    const p = getKstParts(utcMs);
+    return `${p.y}/${p.m}/${p.d} ${p.hh}:${p.mm}`;
+}
+
+// 대상 KST 날짜의 새벽 포함 범위 계산. D 06:01부터 D+1 06:01 직전까지 조회한다.
 function resolveRange(arg) {
-    let startUtc;
+    const dayMs = 86400000;
+    const kstOffsetMs = 9 * 3600 * 1000;
+    const startOffsetMs = 6 * 3600 * 1000 + 60 * 1000;
+    let targetKstMidUtc;
     if (arg) {
         const [y, m, d] = arg.split('-').map(Number);
-        startUtc = Date.UTC(y, m - 1, d) - 9 * 3600 * 1000;
+        targetKstMidUtc = Date.UTC(y, m - 1, d) - kstOffsetMs;
     } else {
-        const todayKstMid = Math.floor((Date.now() + 9 * 3600 * 1000) / 86400000) * 86400000 - 9 * 3600 * 1000;
-        startUtc = todayKstMid - 86400000;
+        const todayKstMidUtc = Math.floor((Date.now() + kstOffsetMs) / dayMs) * dayMs - kstOffsetMs;
+        targetKstMidUtc = todayKstMidUtc - dayMs;
     }
-    const endUtc = startUtc + 86400000;
+    const startUtc = targetKstMidUtc + startOffsetMs;
+    const endExclusiveUtc = startUtc + dayMs;
+    const endDisplayUtc = endExclusiveUtc - 60 * 1000;
     return {
-        startStr: fmtKstDate(startUtc),
-        endStr: fmtKstDate(endUtc),
-        label: fmtKstDate(startUtc).replaceAll('/', '-'),
+        startStr: fmtKstDateTime(startUtc),
+        endExclusiveStr: fmtKstDateTime(endExclusiveUtc),
+        displayStartStr: fmtKstDateMinute(startUtc),
+        displayEndStr: fmtKstDateMinute(endDisplayUtc),
+        label: fmtKstDate(targetKstMidUtc).replaceAll('/', '-'),
     };
 }
 
@@ -420,9 +453,7 @@ function buildMessages(dateLabel, summaryLines, cautionLines, mergedText, unmerg
         `# 📋 일일리포트 (${dateLabel})`,
         '',
         '## 📊 요약',
-        '```',
         ...summaryLines,
-        '```',
         '',
         '## ⚠️ 주의',
         ...cautionLines,
@@ -485,7 +516,7 @@ async function main() {
     const targetLabel = displayBranch(targetBranch);
 
     console.log('');
-    console.log(`[1] 대상 범위: ${range.label} (KST)  ${range.startStr} 00:00 → ${range.endStr} 00:00`);
+    console.log(`[1] 대상 범위: ${range.label} (KST)  ${range.displayStartStr} → ${range.displayEndStr}`);
     console.log(`    실행환경: ${isCi ? 'CI' : 'local'}`);
 
     if (isCi) {
@@ -496,7 +527,7 @@ async function main() {
 
     console.log('');
     console.log(`[${isCi ? 3 : 2}] cm find changeset 실행`);
-    const query = `where owner = '${email}' and date >= '${range.startStr}' and date < '${range.endStr}'`;
+    const query = `where owner = '${email}' and date >= '${range.startStr}' and date < '${range.endExclusiveStr}'`;
     const format = '===CS==={changesetid}|||{date}|||{branch}|||{comment}';
     let raw;
     try {

@@ -4,7 +4,7 @@ PlasticSCM 워크스페이스의 일일 체크인을 자동 요약해서 Discord
 
 ## 무엇
 
-매일 09:00 KST 에 GitHub Actions cron 이 발동해 어제 하루 동안의 본인 체크인을 PlasticSCM Cloud 에서 조회한 뒤, Anthropic Claude 로 도메인별 요약을 만들어 Discord 채널에 보낸다. 개발자가 본인 컴퓨터를 켜둘 필요 없이 클라우드끼리만 통신해서 동작한다.
+매일 09:00 KST 에 GitHub Actions cron 이 발동해 대상 날짜 06:01 KST 부터 다음날 06:00 KST 까지의 본인 체크인을 PlasticSCM Cloud 에서 조회한 뒤, Anthropic Claude 로 도메인별 요약을 만들어 Discord 채널에 보낸다. 개발자가 본인 컴퓨터를 켜둘 필요 없이 클라우드끼리만 통신해서 동작한다.
 
 ## 동작 흐름
 
@@ -16,7 +16,7 @@ GitHub Actions (ubuntu-latest, cron 0 0 * * *)
    ├─ cm profile create — SSO 토큰으로 인증
    │
    ├─ cm find changeset
-   │     · 어제 KST 00:00 ~ 오늘 KST 00:00
+   │     · 대상 날짜 KST 06:01 ~ 다음날 KST 06:00
    │     · 본인(USER_EMAIL) 소유
    │     · 결과를 임시 파일로 dump (pipe buffer 회피)
    │
@@ -40,12 +40,10 @@ GitHub Actions (ubuntu-latest, cron 0 0 * * *)
 # 📋 일일리포트 (YYYY-MM-DD)
 
 ## 📊 요약
-```
 - 전체 체크인 N건
 - main/beta 반영 N건
 - main/beta 미반영 N건
 - 브랜치 N건: ...
-```
 
 ## ⚠️ 주의
 - 코멘트 없는 체크인 N개 (...)
