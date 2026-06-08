@@ -16,6 +16,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const DEFAULT_MODEL = 'claude-sonnet-4-6';
 const UNASSIGNED_OWNER = '미지정';
 const SHARED_OWNER = '공동';
+const KST_WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'];
 
 // 필수 환경변수 — 누락 시 즉시 종료.
 function requireEnv(name) {
@@ -55,6 +56,16 @@ function fmtKstDateTime(utcMs) {
     return `${k.getUTCFullYear()}/${String(k.getUTCMonth() + 1).padStart(2, '0')}/${String(k.getUTCDate()).padStart(2, '0')} ${String(k.getUTCHours()).padStart(2, '0')}:${String(k.getUTCMinutes()).padStart(2, '0')}:${String(k.getUTCSeconds()).padStart(2, '0')}`;
 }
 
+function fmtKstShortMinute(utcMs) {
+    const k = new Date(utcMs + 9 * 3600 * 1000);
+    return `${String(k.getUTCMonth() + 1).padStart(2, '0')}/${String(k.getUTCDate()).padStart(2, '0')} ${String(k.getUTCHours()).padStart(2, '0')}:${String(k.getUTCMinutes()).padStart(2, '0')}`;
+}
+
+function fmtKstWeekday(utcMs) {
+    const k = new Date(utcMs + 9 * 3600 * 1000);
+    return KST_WEEKDAYS[k.getUTCDay()];
+}
+
 // 리포트 KST 날짜 범위 계산. 리포트일 전날 06:00부터 리포트일 06:00 직전까지 수집한다.
 function resolveRange(arg) {
     let endUtc;
@@ -71,6 +82,8 @@ function resolveRange(arg) {
         startStr: fmtKstDateTime(startUtc),
         endStr: fmtKstDateTime(endUtc),
         label: fmtKstDate(endUtc).replaceAll('/', '-'),
+        titleLabel: `${fmtKstDate(endUtc).replaceAll('/', '-')} ${fmtKstWeekday(endUtc)}`,
+        summaryRangeLabel: `${fmtKstShortMinute(startUtc)} ~ ${fmtKstShortMinute(endUtc)}`,
     };
 }
 
@@ -596,11 +609,11 @@ function splitChangeBlocks(text) {
 
 // 메시지 빌더: 요약 뒤에 변경점 섹션을 1900자 내에서 나누어 담는다.
 const DISCORD_LIMIT = 1900;
-function buildMessages(dateLabel, summaryLines, changesText) {
+function buildMessages(dateLabel, summaryRangeLabel, summaryLines, changesText) {
     const head = [
         `# 📋 일일 리포트 (${dateLabel})`,
         '',
-        '## 📊 요약',
+        `## 📊 요약 (${summaryRangeLabel})`,
         ...summaryLines,
         '',
         '',
@@ -703,7 +716,7 @@ async function main() {
     console.log(`    model=${model}  in=${usage.input_tokens ?? '?'} out=${usage.output_tokens ?? '?'} cache_read=${usage.cache_read_input_tokens ?? 0} cache_create=${usage.cache_creation_input_tokens ?? 0}`);
 
     const summaryLines = buildSummarySection(items);
-    const messages = buildMessages(range.label, summaryLines, changesText);
+    const messages = buildMessages(range.titleLabel, range.summaryRangeLabel, summaryLines, changesText);
 
     console.log('');
     console.log(`    메시지 ${messages.length}개 (각 ${messages.map(m => m.length).join('자, ')}자)`);

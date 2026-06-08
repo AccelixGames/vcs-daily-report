@@ -44,9 +44,9 @@ GitHub Actions (ubuntu-latest, cron 30 0 * * *)
 ## 리포트 구조
 
 ```
-# 📋 일일 리포트 (YYYY-MM-DD)
+# 📋 일일 리포트 (YYYY-MM-DD 월)
 
-## 📊 요약
+## 📊 요약 (MM/DD 06:00 ~ MM/DD 06:00)
 - 체크인 N건 (코멘트 없음 X건)
 - 담당자 M명 : `김기민 N건`, `김호준 N건`, `미지정 N건`
 - 브랜치 N건 : `main/beta`, `feature-branch`
