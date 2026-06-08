@@ -4,25 +4,32 @@ PlasticSCM 워크스페이스의 일일 체크인을 자동 요약해서 Discord
 
 ## 무엇
 
-매일 09:00 KST 에 GitHub Actions cron 이 발동해 대상 날짜 06:01 KST 부터 다음날 06:00 KST 까지의 본인 체크인을 PlasticSCM Cloud 에서 조회한 뒤, Anthropic Claude 로 도메인별 요약을 만들어 Discord 채널에 보낸다. 개발자가 본인 컴퓨터를 켜둘 필요 없이 클라우드끼리만 통신해서 동작한다.
+매일 09:30 KST 에 GitHub Actions cron 이 발동해 전날 06:00부터 당일 06:00 직전까지의 전체 체크인을 PlasticSCM Cloud 에서 조회한 뒤, 브랜치 `owner` attribute 기준 담당자별로 집계하고 Anthropic Claude 로 도메인별 요약을 만들어 Discord 채널에 보낸다. 개발자가 본인 컴퓨터를 켜둘 필요 없이 클라우드끼리만 통신해서 동작한다.
 
 ## 동작 흐름
 
 ```
-GitHub Actions (ubuntu-latest, cron 0 0 * * *)
+GitHub Actions (ubuntu-latest, cron 30 0 * * *)
    │
    ├─ cm CLI 설치 (plasticscm-client-core)
    ├─ ~/.plastic4 에 client.conf / cloudregions.conf / unityorgs.conf 복원
    ├─ cm profile create — SSO 토큰으로 인증
    │
    ├─ cm find changeset
-   │     · 대상 날짜 KST 06:01 ~ 다음날 KST 06:00
-   │     · 본인(USER_EMAIL) 소유
+   │     · 전날 KST 06:00 ~ 당일 KST 06:00 직전
+   │     · 전체 owner 체크인
    │     · 결과를 임시 파일로 dump (pipe buffer 회피)
    │
+   ├─ cm find attribute / cm diff
+   │     · 브랜치 owner attribute 로 담당자 확인
+   │     · 코멘트가 빈 체크인도 파일 변경 요약을 Claude 입력에 포함
+   │
+   ├─ cm find merge
+   │     · 전체 merge trace 로 main/beta 병합 여부 계산
+   │     · 다른 브랜치를 거쳐 main/beta 에 들어간 변경도 병합됨으로 분류
+   │
    ├─ 결정론적 섹션 계산 (코드)
-   │     · 요약: 체크인 수, 브랜치 목록
-   │     · 주의: 빈 코멘트 체크인/머지 카운트
+   │     · 요약: 체크인 수, 코멘트 없음 수, 담당자/브랜치 목록
    │
    ├─ Anthropic Messages API
    │     · 모델: claude-sonnet-4-6
@@ -36,32 +43,27 @@ GitHub Actions (ubuntu-latest, cron 0 0 * * *)
 
 ## 리포트 구조
 
-````md
-# 📋 일일리포트 (YYYY-MM-DD)
+```
+# 📋 일일 리포트 (YYYY-MM-DD)
 
 ## 📊 요약
-- 전체 체크인 N건
-- main/beta 반영 N건
-- main/beta 미반영 N건
-- 브랜치 N건: ...
+- 체크인 N건 (코멘트 없음 X건)
+- 담당자 M명 : `김기민 N건`, `김호준 N건`, `미지정 N건`
+- 브랜치 N건 : `main/beta`, `feature-branch`
 
-## ⚠️ 주의
-- 코멘트 없는 체크인 N개 (...)
+## ✅ 변경점 (main 병합됨)
 
-## ✅ main/beta 에 머지된 수정사항
+### 의미별 그룹명
+> - `김기민` **키워드** - 디테일
 
-### 카테고리1
-> - **키워드** - 디테일
+## ⏳ 변경점 (미병합)
 
-## ⏳ 아직 main/beta 에 머지 안 된 수정사항
+### 의미별 그룹명
+> - `김호준` **키워드** - 디테일
+```
 
-### 카테고리2
-> - ...
-````
-
-- 요약·주의는 코드로 결정론적 계산 (변동성 0)
+- 요약은 코드로 결정론적 계산 (변동성 0)
 - 주요 변경점만 Claude API 가 도메인 분류·요약
-- 수정사항은 PlasticSCM merge trace 기준으로 main/beta 반영/미반영을 분리
 
 ## 보안
 

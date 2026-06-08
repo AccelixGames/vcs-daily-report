@@ -2,8 +2,8 @@ name: Daily PlasticSCM Report
 
 on:
   schedule:
-    # 매일 UTC 00:00 = KST 09:00. GitHub cron 은 ±15분 지연 가능.
-    - cron: '0 0 * * *'
+    # 매일 UTC 00:30 = KST 09:30. GitHub cron 은 ±15분 지연 가능.
+    - cron: '30 0 * * *'
   workflow_dispatch:
     inputs:
       date:
