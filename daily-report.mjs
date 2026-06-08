@@ -55,23 +55,22 @@ function fmtKstDateTime(utcMs) {
     return `${k.getUTCFullYear()}/${String(k.getUTCMonth() + 1).padStart(2, '0')}/${String(k.getUTCDate()).padStart(2, '0')} ${String(k.getUTCHours()).padStart(2, '0')}:${String(k.getUTCMinutes()).padStart(2, '0')}:${String(k.getUTCSeconds()).padStart(2, '0')}`;
 }
 
-// 대상 KST 날짜 범위 계산. 기준일 06:00부터 다음날 06:00 직전까지 수집한다.
+// 리포트 KST 날짜 범위 계산. 리포트일 전날 06:00부터 리포트일 06:00 직전까지 수집한다.
 function resolveRange(arg) {
-    let startUtc;
+    let endUtc;
     if (arg) {
         const [y, m, d] = arg.split('-').map(Number);
-        startUtc = Date.UTC(y, m - 1, d, 6) - 9 * 3600 * 1000;
+        endUtc = Date.UTC(y, m - 1, d, 6) - 9 * 3600 * 1000;
     } else {
         const todayKstMid = Math.floor((Date.now() + 9 * 3600 * 1000) / 86400000) * 86400000 - 9 * 3600 * 1000;
         const todayKstSix = todayKstMid + 6 * 3600 * 1000;
-        const endUtc = Date.now() >= todayKstSix ? todayKstSix : todayKstSix - 86400000;
-        startUtc = endUtc - 86400000;
+        endUtc = Date.now() >= todayKstSix ? todayKstSix : todayKstSix - 86400000;
     }
-    const endUtc = startUtc + 86400000;
+    const startUtc = endUtc - 86400000;
     return {
         startStr: fmtKstDateTime(startUtc),
         endStr: fmtKstDateTime(endUtc),
-        label: fmtKstDate(startUtc).replaceAll('/', '-'),
+        label: fmtKstDate(endUtc).replaceAll('/', '-'),
     };
 }
 

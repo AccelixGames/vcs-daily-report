@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       date:
-        description: '대상 날짜 (YYYY-MM-DD). 비우면 어제.'
+        description: '리포트 날짜 (YYYY-MM-DD). 예: 2026-06-08 = 6/7 06:00~6/8 06:00.'
         required: false
         default: ''
 
