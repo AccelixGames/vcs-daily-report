@@ -66,16 +66,19 @@ function fmtKstWeekday(utcMs) {
     return KST_WEEKDAYS[k.getUTCDay()];
 }
 
-// 리포트 KST 날짜 범위 계산. 리포트일 전날 06:00부터 리포트일 06:00 직전까지 수집한다.
+// 리포트 KST 날짜 범위 계산. 리포트일 전날 09:00부터 리포트일 09:00 직전까지 수집한다.
 function resolveRange(arg) {
     let endUtc;
     if (arg) {
         const [y, m, d] = arg.split('-').map(Number);
-        endUtc = Date.UTC(y, m - 1, d, 6) - 9 * 3600 * 1000;
+        endUtc = Date.UTC(y, m - 1, d, 9) - 9 * 3600 * 1000;
+        if (endUtc > Date.now()) {
+            throw new Error(`리포트 ${arg}는 KST 09:00 이후에만 생성 가능`);
+        }
     } else {
         const todayKstMid = Math.floor((Date.now() + 9 * 3600 * 1000) / 86400000) * 86400000 - 9 * 3600 * 1000;
-        const todayKstSix = todayKstMid + 6 * 3600 * 1000;
-        endUtc = Date.now() >= todayKstSix ? todayKstSix : todayKstSix - 86400000;
+        const todayKstNine = todayKstMid + 9 * 3600 * 1000;
+        endUtc = Date.now() >= todayKstNine ? todayKstNine : todayKstNine - 86400000;
     }
     const startUtc = endUtc - 86400000;
     return {

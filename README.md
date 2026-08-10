@@ -4,19 +4,19 @@ PlasticSCM 워크스페이스의 일일 체크인을 자동 요약해서 Discord
 
 ## 무엇
 
-매일 09:30 KST 에 GitHub Actions cron 이 발동해 전날 06:00부터 당일 06:00 직전까지의 전체 체크인을 PlasticSCM Cloud 에서 조회한 뒤, 브랜치 `owner` attribute 기준 담당자별로 집계하고 Anthropic Claude 로 도메인별 요약을 만들어 Discord 채널에 보낸다. 개발자가 본인 컴퓨터를 켜둘 필요 없이 클라우드끼리만 통신해서 동작한다.
+매일 09:00 KST 에 GitHub Actions cron 이 발동해 전날 09:00부터 당일 09:00 직전까지의 전체 체크인을 PlasticSCM Cloud 에서 조회한 뒤, 브랜치 `owner` attribute 기준 담당자별로 집계하고 Anthropic Claude 로 도메인별 요약을 만들어 Discord 채널에 보낸다. 개발자가 본인 컴퓨터를 켜둘 필요 없이 클라우드끼리만 통신해서 동작한다.
 
 ## 동작 흐름
 
 ```
-GitHub Actions (ubuntu-latest, cron 30 0 * * *)
+GitHub Actions (ubuntu-latest, cron 0 0 * * *)
    │
    ├─ cm CLI 설치 (plasticscm-client-core)
    ├─ ~/.plastic4 에 client.conf / cloudregions.conf / unityorgs.conf 복원
    ├─ cm profile create — SSO 토큰으로 인증
    │
    ├─ cm find changeset
-   │     · 전날 KST 06:00 ~ 당일 KST 06:00 직전
+   │     · 전날 KST 09:00 ~ 당일 KST 09:00 직전
    │     · 전체 owner 체크인
    │     · 결과를 임시 파일로 dump (pipe buffer 회피)
    │
@@ -46,7 +46,7 @@ GitHub Actions (ubuntu-latest, cron 30 0 * * *)
 ```
 # 📋 일일 리포트 (YYYY-MM-DD 월)
 
-## 📊 요약 (MM/DD 06:00 ~ MM/DD 06:00)
+## 📊 요약 (MM/DD 09:00 ~ MM/DD 09:00)
 - 체크인 N건 (코멘트 없음 X건)
 - 담당자 M명 : `김기민 N건`, `김호준 N건`, `미지정 N건`
 - 브랜치 N건 : `main/beta`, `feature-branch`
